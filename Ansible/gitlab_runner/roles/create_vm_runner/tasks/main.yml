@@ -1,0 +1,78 @@
+---
+- name: create a address for google instance
+  gcp_compute_address:
+    name: "{{ vmname + '-address' }}"
+    region: "{{ region }}"
+    project: "{{ project_id }}"
+    auth_kind: "{{ gcloud_auth }}"
+    service_account_file: "{{ gcloud_credentials_file }}"
+    scopes:
+      - https://www.googleapis.com/auth/compute
+    state: present
+  register: address
+
+- name: create google instance for gitlab-runner
+  gcp_compute_instance:
+    name: '{{ vmname }}'
+    machine_type: '{{ machinetype }}'
+    disks:
+      - device_name: boot
+        auto_delete: no
+        boot: yes
+        initialize_params:
+          disk_size_gb: 10
+          disk_type: '{{ disktype }}'
+          source_image: '{{ sourceimage }}'
+    network_interfaces:
+      - network: null
+        access_configs:
+          - name: 'External NAT'
+            nat_ip: "{{ address }}"
+            type: 'ONE_ON_ONE_NAT'
+    zone: '{{ zone }}'
+    project: '{{ project_id }}'
+    auth_kind: '{{ gcloud_auth }}'
+    service_account_file: '{{ gcloud_credentials_file }}'
+    scopes:
+      - https://www.googleapis.com/auth/compute
+    state: present
+  register: vm_instance
+
+- name: wait for SSH connection readiness
+  wait_for:
+    host: '{{ vm_instance.networkInterfaces[0].accessConfigs[0].natIP }}'
+    port: 22
+    delay: 10
+    timeout: 60
+
+- name: gcloud - make sure project gcp is already set
+  command: |
+    gcloud config set project "{{ project_id }}"
+
+- name: gcloud - connect ssh to instance for the first time
+  command: |
+    gcloud compute ssh --project="{{ project_id }}" \
+    --zone="{{ zone }}" \
+    "{{ vmname }}"
+
+- name: check whether ssh private key exist
+  stat:
+    path: '{{ ansible_ssh_private_keypath }}'
+  register: ssh_key
+
+- name: check whether ssh public key exist
+  stat:
+    path: '{{ ansible_ssh_public_keypath }}'
+  register: ssh_key_pub
+
+- name: add google inventory to in-memory (local)
+  add_host:
+    name: '{{ vmname }}'
+    state: present
+    ansible_connection: ssh
+    ansible_host: '{{ vm_instance.networkInterfaces[0].accessConfigs[0].natIP }}'
+    ansible_user: '{{ ansible_ssh_username }}'
+    ansible_ssh_private_key_file: '{{ ansible_ssh_private_keypath }}'
+    groups:
+      - 'gcprunner'
+  register: gcp_runner

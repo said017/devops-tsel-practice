@@ -1,0 +1,14 @@
+---
+# install_url: https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh
+# vm_prov_url: https://storage.cloud.google.com/erlangga-ervansyah/startup.sh
+
+# inventory for vm provisioning
+user: erlanggaevan
+gcloud_sa_path: "purwadhika-devops-kelas1-926eb4ae4e0f.json"
+gcloud_credentials_file: "{{ lookup('env','HOME') }}/{{ gcloud_sa_path }}"
+sh_path: "startup.sh"
+sh_file: "{{ lookup('env','HOME') }}/{{ sh_path }}"
+gitlab_package_url: "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh"
+terraform_package_url: "https://releases.hashicorp.com/terraform/1.0.4/terraform_1.0.4_linux_amd64.zip"
+kubectl_package_url: "https://dl.k8s.io/release/v1.22.1/bin/linux/amd64/kubectl"
+

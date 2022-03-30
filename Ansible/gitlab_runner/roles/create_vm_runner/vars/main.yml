@@ -1,0 +1,27 @@
+---
+# inventory for vm
+vmname: vm-group3-ansible-runner
+machinetype: e2-medium
+disktype: pd-standard
+sourceimage: "projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts"
+
+# general variable for ansible inventory
+ansible_ssh_username: "erlanggaevan"
+ansible_ssh_desc: "google-ssh"
+ssh_private_keypath: ".ssh/google_compute_engine"
+ssh_public_keypath: ".ssh/google_compute_engine.pub"
+ssh_known_hosts: ".ssh/google_compute_known_hosts"
+ansible_ssh_private_keypath: "{{ lookup('env','HOME') }}/{{ ssh_private_keypath }}"
+ansible_ssh_public_keypath: "{{ lookup('env','HOME') }}/{{ ssh_public_keypath }}"
+ansible_ssh_known_hosts_keypath: "{{ lookup('env','HOME') }}/{{ ssh_known_hosts }}"
+
+# general variable for gcp
+zone: australia-southeast2-a
+region: australia-southeast2
+project_id: purwadhika-devops-kelas1
+gcloud_auth: serviceaccount
+gcloud_sa_path: "purwadhika-devops-kelas1-926eb4ae4e0f.json"
+gcloud_credentials_file: "{{ lookup('env','HOME') }}/{{ gcloud_sa_path }}"
+gcloud_service_account: devops-group3@purwadhika-devops-kelas1.iam.gserviceaccount.com
+gcloud_sa_uique_id: "108617551439682325027"
+google_ssh_id: "sa-{{ gcloud_sa_uique_id }}"

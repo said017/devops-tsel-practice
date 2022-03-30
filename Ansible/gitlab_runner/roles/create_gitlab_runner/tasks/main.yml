@@ -1,0 +1,13 @@
+---
+- name: register gitlab-runner
+  command: |
+    gitlab-runner register \
+    --non-interactive \
+    --url "{{ gitlab_url }}" \
+    --registration-token "{{ registration_token }}" \
+    --executor "{{ gitlab_exec }}" \
+    --description "{{ gitlab_desc }}" \
+    --tag-list "{{ gitlab_tags }}" \
+    --run-untagged="false" \
+    --locked="true" \
+    --access-level="ref_protected"

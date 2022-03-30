@@ -1,0 +1,47 @@
+stages:
+  - build
+  - test
+  - push-to-prod
+
+build:
+  stage: build
+  tags:
+    - google
+  script:
+    - docker pull busybox:1.28
+    - docker login -u $CI_JOB_USER -p $CI_JOB_TOKEN $CI_REGISTRY
+    - cd Laravel_yaml/Laravel-todo-app-source
+    - docker build --tag $CI_REGISTRY/devops-tsel-03/lavarel-cicd/laravel:$CI_COMMIT_SHA --tag $CI_REGISTRY/devops-tsel-03/lavarel-cicd/laravel:latest .
+    - docker push $CI_REGISTRY/devops-tsel-03/lavarel-cicd/laravel:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY/devops-tsel-03/lavarel-cicd/laravel:latest
+    - docker tag busybox:1.28 $CI_REGISTRY/devops-tsel-03/lavarel-cicd/busybox:1.28
+    - docker push $CI_REGISTRY/devops-tsel-03/lavarel-cicd/busybox:1.28
+  only:
+    changes:
+      - Laravel_yaml/Laravel-todo-app-source/**/*
+
+test:
+  stage: test
+  tags:
+    - google
+  script:
+    - export GITLAB_JSON=$(echo -n "{\"auths\":{\"registry.gitlab.com\":{\"auth\":\"`echo -n "$CI_JOB_USER:$CI_JOB_TOKEN"|base64`\"}}}")
+    - echo $GITLAB_JSON
+    - cd Terraform_fix/projects/casptone-project
+    - terraform init
+    - terraform plan -var "secret_json=$GITLAB_JSON"
+
+push-to-prod:
+  stage: push-to-prod
+  only:
+    refs:
+      - main
+  tags:
+    - google
+  script:
+    - export GITLAB_JSON=$(echo -n "{\"auths\":{\"registry.gitlab.com\":{\"auth\":\"`echo -n "$CI_JOB_USER:$CI_JOB_TOKEN"|base64`\"}}}")
+    - echo $GITLAB_JSON
+    - cd Terraform_fix/projects/casptone-project
+    - terraform init
+    - terraform plan -var "secret_json=$GITLAB_JSON"
+    - terraform apply  -var "secret_json=$GITLAB_JSON" -auto-approve

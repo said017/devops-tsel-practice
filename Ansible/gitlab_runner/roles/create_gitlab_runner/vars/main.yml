@@ -1,0 +1,10 @@
+---
+# inventory for gitlab_runner
+
+gitlab_url: "https://gitlab.com/"
+gitlab_runner_name: "devops-group3-runner"
+gitlab_desc: "Test VM with ansible (shell executor)"
+gitlab_exec: "shell"
+gitlab_tags: "google, shell, ansible"
+access_token: "hefvxziYsJTeY69hNctb"
+registration_token: "GkSC98wzi2hvTh3oHhxz"

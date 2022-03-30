@@ -1,0 +1,75 @@
+---
+- name: remove a address for google instance
+  gcp_compute_address:
+    name: "{{ vmname + '-address' }}"
+    region: "{{ region }}"
+    project: "{{ project_id }}"
+    auth_kind: "{{ gcloud_auth }}"
+    service_account_file: "{{ gcloud_credentials_file }}"
+    scopes:
+      - https://www.googleapis.com/auth/compute
+    state: absent
+  register: address
+
+- name: remove google instance for gitlab-runner
+  gcp_compute_instance:
+    name: '{{ vmname }}'
+    machine_type: '{{ machinetype }}'
+    disks:
+      - device_name: boot
+        auto_delete: no
+        boot: yes
+        initialize_params:
+          disk_size_gb: 10
+          disk_type: '{{ disktype }}'
+          source_image: '{{ sourceimage }}'
+    network_interfaces:
+      - network: null
+        access_configs:
+          - name: 'External NAT'
+            nat_ip: "{{ address }}"
+            type: 'ONE_ON_ONE_NAT'
+    zone: '{{ zone }}'
+    project: '{{ project_id }}'
+    auth_kind: '{{ gcloud_auth }}'
+    service_account_file: '{{ gcloud_credentials_file }}'
+    scopes:
+      - https://www.googleapis.com/auth/compute
+    state: absent
+
+- name: remove instance inventory to in-memory (local)
+  add_host:
+    name: '{{ vmname }}'
+    state: absent
+    groups:
+      - 'gcprunner'
+
+- name: check whether google ssh private key exist
+  stat:
+    path: '{{ ansible_ssh_private_keypath }}'
+  register: ssh_key
+
+- name: check whether google ssh public key exist
+  stat:
+    path: '{{ ansible_ssh_public_keypath }}'
+  register: ssh_key_pub
+
+- name: check whether google ssh known hosts exist
+  stat:
+    path: '{{ ansible_ssh_known_hosts_keypath }}'
+  register: ssh_key_known
+
+- name: remove google ssh private key if exist
+  when: ssh_key.stat.exists == true
+  command: |
+    rm '{{ ansible_ssh_private_keypath }}'
+
+- name: remove google ssh public key if exist 
+  when: ssh_key_pub.stat.exists == true
+  command: |
+    rm '{{ ansible_ssh_public_keypath }}'
+
+- name: remove google ssh known hosts if exist
+  when: ssh_key_known.stat.exists == true
+  command: |
+    rm '{{ ansible_ssh_known_hosts_keypath }}'

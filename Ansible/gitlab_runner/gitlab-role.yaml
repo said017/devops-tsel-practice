@@ -1,0 +1,22 @@
+---
+
+- name: Create vm gce
+  hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  roles:
+    - create_vm_runner
+
+- name: install depedencies for gitlab-runner
+  hosts: gcprunner
+  gather_facts: no
+  become: true
+  roles:
+    - provisioning_vm_runner
+
+- name: Register gitlab-runner on remote vm gce 
+  hosts: gcprunner
+  gather_facts: no
+  become: true
+  roles:
+    - create_gitlab_runner

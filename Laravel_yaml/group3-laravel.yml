@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: laravel-todo
+  labels:
+    app: laravel-todo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: laravel-todo
+  template:
+    metadata:
+      labels:
+        app: laravel-todo
+    spec:
+      initContainers:
+      - name: init-db
+        image: busybox:1.28
+        command: ['sh', '-c', 'until nslookup mysql-service; do echo waiting for db; sleep 2; done;']
+      containers:
+      - name: web
+        image: said017/laravel-group3-todo
+        imagePullPolicy: Always
+	resources:
+	  limits:
+	    memory: 1000Mi
+	    cpu: 1
+	  requests:
+	    memory: 500Mi
+	    cpu: 500m
+        args:
+          - /bin/bash
+          - -c
+          - php artisan key:generate && php artisan migrate --force && php artisan config:cache && php artisan serve --host=0.0.0.0 --port=8080
+        env:
+        - name: DB_HOST
+          value: mysql-service
+        - name: DB_USERNAME
+          value: laravel
+        - name: DB_PASSWORD
+          value: secret
+        - name: DB_DATABASE
+          value: laravel
+        ports:
+        - containerPort: 8080
